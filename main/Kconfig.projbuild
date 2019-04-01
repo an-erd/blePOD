@@ -1,0 +1,137 @@
+menu "disPOD Configuration"
+
+    menu "WiFi and NTP configuration"
+
+        config USE_WIFI
+            bool "Use wifi"
+            default y
+            help
+                If WiFi is used ntp server will be used to provide the exact time
+                and file timestamps will be correct.
+
+        menu "WiFi access point configuration"
+
+            config WIFI_AP1
+                bool "Set WiFi access point 1" if USE_WIFI
+            config WIFI_AP1_SSID
+                string "SSID of access point 1" if WIFI_AP1
+            config WIFI_AP1_PASSWORD
+                string "Password of access point 1" if WIFI_AP1
+
+            config WIFI_AP2
+                bool "Set WiFi access point 2" if WIFI_AP1
+            config WIFI_AP2_SSID
+                string "SSID of access point 2" if WIFI_AP2
+            config WIFI_AP2_PASSWORD
+                string "Password of access point 2" if WIFI_AP2
+
+            config WIFI_AP3
+                bool "Set WiFi access point 3" if WIFI_AP2
+            config WIFI_AP3_SSID
+                string "SSID of access point 3" if WIFI_AP3
+            config WIFI_AP3_PASSWORD
+                string "Password of access point 3" if WIFI_AP3
+
+            config WIFI_AP4
+                bool "Set WiFi access point 4" if WIFI_AP3
+            config WIFI_AP4_SSID
+                string "SSID of access point 4" if WIFI_AP4
+            config WIFI_AP4_PASSWORD
+                string "Password of access point 4" if WIFI_AP4
+
+            config WIFI_AP5
+                bool "Set WiFi access point 5" if WIFI_AP4
+            config WIFI_AP5_SSID
+                string "SSID of access point 5" if WIFI_AP5
+            config WIFI_AP5_PASSWORD
+                string "Password of access point 5" if WIFI_AP5
+
+            config WIFI_AP_COUNT
+                int "Number of access points configured"
+                range 0 5
+                default 5 if WIFI_AP5
+                default 4 if WIFI_AP4
+                default 3 if WIFI_AP3
+                default 2 if WIFI_AP2
+                default 1 if WIFI_AP1
+                default 0
+
+            config WIFI_MAXIMUM_RETRY
+                int "Maximum retry"
+               	depends on USE_WIFI
+                default 5
+                help
+            	Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+        endmenu
+
+    config USE_SNTP
+        bool "SNTP"
+        depends on USE_WIFI
+        default y
+        help
+            If WiFi and internet are available an ntp server will be used to get  the exact time
+            and file timestamps will be correct.
+
+    endmenu
+
+    menu "OTA configuration"
+        config OTA_SERVER_IP
+            string "Enter HTTP server IP or domain"
+            default "192.168.2.130"
+        config OTA_SERVER_PORT
+            int "Enter HTTP server port"
+            default 80
+        config OTA_FILE_NAME
+            string "Enter OTA file path"
+            default "/blepod.bin"
+    endmenu
+
+    menu "SD Card configuration"
+
+        config USE_SD
+            bool "Use SD card"
+            default y
+            help
+                Enable SD card and allow to store running values on the card.
+
+        config SDCARD_FILE_NAME
+            string "Enter file name format for running value files"
+            default "/sdcard/runvals_%u.txt"
+
+        config SDCARD_NUM_BUFFERS
+            int "Number of buffers for archiver"
+            default 5
+
+        config SDCARD_BUFFER_SIZE
+            int "Size (=num of elements) of the buffers for archiver"
+            default 8192
+
+        config SDCARD_PIN_MISO
+            int "MISO PIN"
+            default 19
+        config SDCARD_PIN_MOSI
+            int "MOSI PIN"
+            default 23
+        config SDCARD_PIN_CLK
+            int "CLK PIN"
+            default 18
+        config SDCARD_PIN_CS
+            int "CS PIN"
+            default 4
+
+    endmenu
+
+    menu "Display/device timeout configuration"
+
+        config IDLE_TIME_STATUS_SCREEN
+            int "Time (sec) to turn of the device if device is not moved and is not working on initialization/connection. 0 for no shutdown."
+            range 0 600
+            default 300
+        config IDLE_TIME_DATA_SCREEN
+            int "Time (sec) to leave data screen if no BLE package is received. 0 to not leave running screen automatically."
+            range 0 600
+            default 300
+    endmenu
+
+endmenu

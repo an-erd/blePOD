@@ -33,3 +33,8 @@
 .vscode/BROWSE.VC.DB
 .vscode/BROWSE.VC.DB-shm
 .vscode/BROWSE.VC.DB-wal
+
+build/
+.vscode/ipch
+Arbeitsordner/
+sdkconfig.old
