@@ -24,11 +24,9 @@
 #include "iot_ota.h"
 #include "iot_param.h"
 #include "pod_wifi.h"
-// #include "pod_gattc.h"
 #include "pod_tft.h"
 #include "pod_sntp.h"
-
-
+#include "pod_gattc.h"
 
 // IOT param
 typedef struct {
@@ -103,9 +101,9 @@ extern const TickType_t xTicksToWait;
 extern QueueHandle_t values_queue;
 
 // pod screen data
-// extern dispod_screen_status_t pod_screen_status;
+extern pod_screen_status_t pod_screen_status;
 
-// // global running values data struct
+// global running values data struct
 // extern dataValuesStruct_t data_values;
 
 #define BLE_NAME_FORMAT         "BLE Device (%s)"
