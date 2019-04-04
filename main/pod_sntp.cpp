@@ -23,17 +23,13 @@ void pod_sntp_check_time()
     // Is time set? If not, tm_year will be (1970 - 1900).
     if (timeinfo.tm_year < (2016 - 1900)) {
         ESP_LOGI(TAG, "Time is not set yet. Getting time over NTP.");
-
         xEventGroupSetBits(pod_evg, POD_NTP_UPDATING_BIT);
-
-        // pod_screen_status_update_ntp(&pod_screen_status, NTP_UPDATING);
-        // xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
-
+        pod_screen_status_update_ntp(&pod_screen_status, NTP_UPDATING);
+        xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
         s_obtain_time();
         // update 'now' variable with current time
         time(&now);
     }
-
 
     char strftime_buf[64];
 
@@ -46,20 +42,16 @@ void pod_sntp_check_time()
 
     if (timeinfo.tm_year >= (2016 - 1900)) {
         ESP_LOGI(TAG, "Time set yet.");
-
         xEventGroupClearBits(pod_evg, POD_NTP_UPDATING_BIT);
         xEventGroupSetBits  (pod_evg, POD_NTP_UPDATED_BIT);
-
-        // pod_screen_status_update_ntp(&pod_screen_status, NTP_UPDATED);
-        // xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+        pod_screen_status_update_ntp(&pod_screen_status, NTP_UPDATED);
+        xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
     } else {
         ESP_LOGI(TAG, "Time still not set.");
-
         xEventGroupClearBits(pod_evg, POD_NTP_UPDATING_BIT);
         xEventGroupClearBits(pod_evg, POD_NTP_UPDATED_BIT);
-
-        // pod_screen_status_update_ntp(&pod_screen_status, NTP_TIME_NOT_SET);
-        // xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+        pod_screen_status_update_ntp(&pod_screen_status, NTP_TIME_NOT_SET);
+        xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
     }
 }
 

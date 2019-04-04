@@ -106,6 +106,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 {
     esp_err_t err;
     uint32_t duration = 0;
+    char buffer[64];
 
     switch (event){
         case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
@@ -213,9 +214,28 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
     }
 }
 
+void s_set_status_abort()
+{
+    char buffer[64];
+
+    snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    xEventGroupClearBits(pod_evg, POD_BLE_SCANNING_BIT);
+    xEventGroupSetBits(pod_evg, POD_BLE_ACTIVATED_BIT);
+    xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+}
+
 void pod_ble_initialize()
 {
     esp_err_t ret;
+    char buffer[64];
+
+    ESP_LOGD(TAG, "pod_ble_initialize >");
+
+    snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    xEventGroupSetBits(pod_evg, POD_BLE_SCANNING_BIT);
+    xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
 
     ret = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 	ESP_ERROR_CHECK(ret);
@@ -224,42 +244,67 @@ void pod_ble_initialize()
     ret = esp_bt_controller_init(&bt_cfg);
     if (ret) {
         ESP_LOGE(TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(ret));
+        s_set_status_abort();
         return;
     }
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret) {
         ESP_LOGE(TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+        s_set_status_abort();
         return;
     }
 
     ret = esp_bluedroid_init();
     if (ret) {
         ESP_LOGE(TAG, "%s init bluetooth failed: %s", __func__, esp_err_to_name(ret));
+        s_set_status_abort();
         return;
     }
 
     ret = esp_bluedroid_enable();
     if (ret) {
         ESP_LOGE(TAG, "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
+        s_set_status_abort();
         return;
     }
+    ESP_LOGD(TAG, "pod_ble_initialize <");
 }
 
 void pod_ble_app_register()
 {
     esp_err_t ret;
+    char buffer[64];
 
+    ESP_LOGD(TAG, "pod_ble_app_register >");
+
+    snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    xEventGroupClearBits(pod_evg, POD_BLE_SCANNING_BIT);
+    xEventGroupSetBits(pod_evg, POD_BLE_CONNECTING_BIT);
+    xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
     //register the callback function to the gap module
     ret = esp_ble_gap_register_callback(esp_gap_cb);
     if (ret != ESP_OK){
         ESP_LOGE(TAG, "%s gap register failed, error code = %x, %s",
         __func__, ret, esp_err_to_name(ret));
+        s_set_status_abort();
         return;
     }
+    ESP_LOGD(TAG, "pod_ble_app_register <");
 }
 
 void pod_ble_start_scanning()
 {
+    char buffer[64];
+    ESP_LOGD(TAG, "pod_ble_start_scanning >");
+
     esp_ble_gap_set_scan_params(&ble_scan_params);
+
+    snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    xEventGroupClearBits(pod_evg, POD_BLE_CONNECTING_BIT);
+    xEventGroupSetBits(pod_evg, POD_BLE_CONNECTED_BIT);
+    xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+    ESP_LOGD(TAG, "pod_ble_start_scanning <");
 }

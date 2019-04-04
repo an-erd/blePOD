@@ -62,7 +62,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             ESP_LOGD(TAG, "SYSTEM_EVENT_STA_START");
 
             xEventGroupSetBits(pod_evg, POD_WIFI_SCANNING_BIT);
-            // pod_screen_status_update_wifi(&pod_screen_status, WIFI_SCANNING, "scanning");
+            pod_screen_status_update_wifi(&pod_screen_status, WIFI_SCANNING, "scanning");
             xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
 
             xEventGroupSetBits(evg, STRT_BIT);
@@ -75,7 +75,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
             ESP_LOGD(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-            // pod_screen_status_update_wifi(&pod_screen_status, WIFI_NOT_CONNECTED, "-");
+            pod_screen_status_update_wifi(&pod_screen_status, WIFI_NOT_CONNECTED, "-");
             xEventGroupClearBits(pod_evg, POD_WIFI_CONNECTING_BIT);
             xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
 
@@ -88,7 +88,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             s_retry_num = 0;
 
             ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
-            // pod_screen_status_update_wifi(&pod_screen_status, WIFI_CONNECTED, (char*) wifi_config.sta.ssid);
+            pod_screen_status_update_wifi(&pod_screen_status, WIFI_CONNECTED, (char*) wifi_config.sta.ssid);
             xEventGroupClearBits(pod_evg, POD_WIFI_CONNECTING_BIT);
             xEventGroupSetBits(pod_evg, POD_WIFI_CONNECTED_BIT);
             xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
@@ -186,8 +186,8 @@ esp_err_t pod_wifi_network_up()
 
             xEventGroupClearBits(pod_evg, POD_WIFI_SCANNING_BIT);
             xEventGroupSetBits(pod_evg, POD_WIFI_CONNECTING_BIT);
-            // pod_screen_status_update_wifi(&pod_screen_status, WIFI_CONNECTING, (char *)wifi_config.sta.ssid);
-            // xEventGroupSetBits(pod_display_evg, POD_PLAY_UPDATE_BIT);   // TODO LAY?!
+            pod_screen_status_update_wifi(&pod_screen_status, WIFI_CONNECTING, (char *)wifi_config.sta.ssid);
+            xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);   // TODO display?!
 
             ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
             xEventGroupClearBits(evg, DISC_BIT | DHCP_BIT);

@@ -350,12 +350,12 @@ void pod_archiver_task(void *pvParameters)
             // readFile(SD, "/hello.txt");
             if(SD.cardType() != CARD_NONE){
                 xEventGroupSetBits(pod_evg, POD_SD_AVAILABLE_BIT);
-                // pod_screen_status_update_sd(&pod_screen_status, SD_AVAILABLE);
+                pod_screen_status_update_sd(&pod_screen_status, SD_AVAILABLE);
                 xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
                 ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_SD_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
             } else {
                 xEventGroupClearBits(pod_evg, POD_SD_AVAILABLE_BIT);
-                // dispod_screen_status_update_sd(&pod_screen_status, SD_NOT_AVAILABLE);
+                pod_screen_status_update_sd(&pod_screen_status, SD_NOT_AVAILABLE);
                 xEventGroupSetBits(pod_evg, POD_DISPLAY_UPDATE_BIT);
                 ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_SD_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
             }

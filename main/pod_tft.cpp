@@ -67,6 +67,7 @@ void pod_screen_status_initialize(pod_screen_status_t *params)
     pod_screen_status_update_wifi        (params, WIFI_NOT_CONNECTED, "n/a");
     pod_screen_status_update_ntp         (params, NTP_TIME_NOT_SET);             // TODO where to deactivate?
     snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+   	pod_screen_status_update_ble         (params, BLE_NOT_CONNECTED, buffer);      // TODO where to deactivate?
     pod_screen_status_update_sd          (params, SD_NOT_AVAILABLE);                // TODO where to deactivate?
     pod_screen_status_update_button      (params, BUTTON_A, false, "");
     pod_screen_status_update_button      (params, BUTTON_B, false, "");
@@ -114,12 +115,12 @@ void pod_screen_status_update_ntp(pod_screen_status_t *params, display_ntp_statu
     params->ntp_status = new_status;
 }
 
-// void pod_screen_status_update_ble(pod_screen_status_t *params, display_ble_status_t new_status, const char* new_name)
-// {
-// 	params->ble_status = new_status;
-//     if(new_name)
-//         memcpy(params->ble_name, new_name, strlen(new_name) + 1);
-// }
+void pod_screen_status_update_ble(pod_screen_status_t *params, display_ble_status_t new_status, const char* new_name)
+{
+	params->ble_status = new_status;
+    if(new_name)
+        memcpy(params->ble_name, new_name, strlen(new_name) + 1);
+}
 
 void pod_screen_status_update_sd(pod_screen_status_t *params, display_sd_status_t new_status)
 {
@@ -214,7 +215,7 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
 
     	// Title
         M5.Lcd.setTextDatum(TC_DATUM);
-        M5.Lcd.drawString("Starting disPOD...", XCEN, YPAD, GFXFF);
+        M5.Lcd.drawString("Starting blePOD...", XCEN, YPAD, GFXFF);
     }
 
 	// 1) WiFi

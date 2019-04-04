@@ -21,7 +21,7 @@
 #include <M5Stack.h>
 #include "pod_main.h"
 
-static const char* TAG = "BLEPOD";
+static const char* TAG = "POD";
 
 // Event group
 EventGroupHandle_t pod_evg;
@@ -275,12 +275,15 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
             break;
         case POD_SD_INIT_DONE_EVT:
             ESP_LOGV(TAG, "POD_SD_INIT_DONE_EVT");
-            uxBits = xEventGroupWaitBits(pod_evg, POD_RETRY_BLE_EVT, pdTRUE, pdFALSE, 0);
-            ESP_LOGD(TAG, "uxBits: POD_BLE_RETRY_BIT = %u, uxBits = %u", POD_RETRY_BLE_EVT, uxBits);
-            if(!(uxBits & POD_RETRY_BLE_EVT)){
-                // pod_ble_initialize();       //TODO
-                // pod_ble_app_register();
+            uxBits = xEventGroupWaitBits(pod_evg, POD_BLE_RETRY_BIT, pdTRUE, pdFALSE, 0);
+            ESP_LOGD(TAG, "uxBits: POD_BLE_RETRY_BIT = %u, uxBits = %u", POD_BLE_RETRY_BIT, uxBits);
+            if(!(uxBits & POD_BLE_RETRY_BIT)){
+                ESP_LOGD(TAG, "> !POD_BLE_RETRY_BIT");
+                pod_ble_initialize();       //TODO
+                pod_ble_app_register();
+                pod_ble_start_scanning();
             } else {
+                ESP_LOGD(TAG, "> POD_BLE_RETRY_BIT");
                 // pod_ble_start_scanning();    // TODO check whether it works with additional call to start_scanning.
             }
             break;
@@ -304,18 +307,18 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
                 xEventGroupSetBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT);
                 retryWifi = true;
             }
-            // if(!(xEventGroupWaitBits(pod_evg, POD_BLE_CONNECTED_BIT, pdFALSE, pdFALSE, 0) & POD_BLE_CONNECTED_BIT)){
-            //     // option: no BLE, retry BLE -> Button B
-            //     pod_screen_status_update_button(&pod_screen_status, BUTTON_B, true, "BLE");
-            //     xEventGroupSetBits(pod_evg, POD_BTN_B_RETRY_BLE_BIT);
-            //     retryBLE = true;
-            // }
-            // if((xEventGroupWaitBits(pod_evg, POD_BLE_CONNECTED_BIT, pdFALSE, pdFALSE, 0) & POD_BLE_CONNECTED_BIT)){
-            //     // option: BLE avail, go to running screen -> Button C
-            //     pod_screen_status_update_button(&pod_screen_status, BUTTON_C, true, "Cont.");
-            //     xEventGroupSetBits(pod_evg, POD_BTN_C_CNT_BIT);
-            //     cont = true;
-            // }
+            if(!(xEventGroupWaitBits(pod_evg, POD_BLE_CONNECTED_BIT, pdFALSE, pdFALSE, 0) & POD_BLE_CONNECTED_BIT)){
+                // option: no BLE, retry BLE -> Button B
+                pod_screen_status_update_button(&pod_screen_status, BUTTON_B, true, "BLE");
+                xEventGroupSetBits(pod_evg, POD_BTN_B_RETRY_BLE_BIT);
+                retryBLE = true;
+            }
+            if((xEventGroupWaitBits(pod_evg, POD_BLE_CONNECTED_BIT, pdFALSE, pdFALSE, 0) & POD_BLE_CONNECTED_BIT)){
+                // option: BLE avail, go to running screen -> Button C
+                pod_screen_status_update_button(&pod_screen_status, BUTTON_C, true, "Cont.");
+                xEventGroupSetBits(pod_evg, POD_BTN_C_CNT_BIT);
+                cont = true;
+            }
             if(retryWifi && retryBLE && (!cont)){
                 pod_screen_status_update_statustext(&pod_screen_status, true, "Retry WiFi or BLE?");
             } else if(retryWifi && (!retryBLE) && cont){
@@ -586,7 +589,7 @@ extern "C" void app_main()
         .task_core_id = tskNO_AFFINITY
     };
 
-    // Create the dispod event loop
+    // Create the pod event loop
     ESP_ERROR_CHECK(esp_event_loop_create(&pod_loop_args, &pod_loop_handle));
 
     // Register the handler for task iteration event.

@@ -95,7 +95,9 @@
         "esp32-hal-dac.h": "c",
         "esp32-hal.h": "c",
         "esp32-hal-ledc.h": "c",
-        "arduino.h": "c"
+        "arduino.h": "c",
+        "deque": "cpp",
+        "unordered_map": "cpp"
     },
 	"files.exclude": {
 		"**/.git": true,

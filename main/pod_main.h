@@ -71,23 +71,23 @@ extern EventGroupHandle_t pod_sd_evg;
 // blePOD Client callback function events
 typedef enum {
     // workflow events
-    POD_STARTUP_EVT              = 0,     /*!< When the disPOD event loop started, the event comes, last call from app_main() */
-    POD_BASIC_INIT_DONE_EVT,              /*!< When the basic init has completed, the event comes */
-    POD_SPLASH_AND_NETWORK_INIT_DONE_EVT, /*!< When the display splash etc. (not coded yet) has completed, the event comes */
-    POD_WIFI_INIT_DONE_EVT,               /*!< When the WiFi init, not yet completed, the event comes */
-    POD_WIFI_GOT_IP_EVT,                  /*!< When the WiFi is connected and got an IP, the event comes */
-    POD_NTP_INIT_DONE_EVT,                /*!< When the NTP update (successfull or failed!) completed, the event comes */
-    POD_SD_INIT_DONE_EVT,                 /*!< When the SD mount/probe/unmount is completed, the event comes */
-    POD_BLE_DEVICE_DONE_EVT,
-    POD_STARTUP_COMPLETE_EVT,             /*!< When the startup sequence was run through, the event comes */
-    POD_RETRY_WIFI_EVT,                   /*!< When an retry of WiFi is requested, the event comes */
-    POD_RETRY_BLE_EVT,                   /*!< When an retry of WiFi is requested, the event comes */
-    POD_GO_TO_DATA_SCREEN_EVT,            /*!< When starting the running screen is requested, the event comes */
-    POD_BLE_DISCONNECT_EVT,              /*!< When BLE disconnects, the event comes */
+    POD_STARTUP_EVT              = 0,       /*!< When the disPOD event loop started, the event comes, last call from app_main() */
+    POD_BASIC_INIT_DONE_EVT,                /*!< When the basic init has completed, the event comes */
+    POD_SPLASH_AND_NETWORK_INIT_DONE_EVT,   /*!< When the display splash etc. (not coded yet) has completed, the event comes */
+    POD_WIFI_INIT_DONE_EVT,                 /*!< When the WiFi init, not yet completed, the event comes */
+    POD_WIFI_GOT_IP_EVT,                    /*!< When the WiFi is connected and got an IP, the event comes */
+    POD_NTP_INIT_DONE_EVT,                  /*!< When the NTP update (successfull or failed!) completed, the event comes */
+    POD_SD_INIT_DONE_EVT,                   /*!< When the SD mount/probe/unmount is completed, the event comes */
+    POD_BLE_DEVICE_DONE_EVT,                /*!< When the BLE device initialization is completed, the event comes */
+    POD_STARTUP_COMPLETE_EVT,               /*!< When the startup sequence was run through, the event comes */
+    POD_RETRY_WIFI_EVT,                     /*!< When an retry of WiFi is requested, the event comes */
+    POD_RETRY_BLE_EVT,                      /*!< When an retry of BLE is requested, the event comes */
+    POD_GO_TO_DATA_SCREEN_EVT,              /*!< When starting the running screen is requested, the event comes */
+    POD_BLE_DISCONNECT_EVT,                 /*!< When BLE disconnects, the event comes */
     // activity events
-    POD_BUTTON_TAP_EVT,                   /*!< When a button has been TAP event (=released), the event comes */
-    POD_BUTTON_2SEC_RELEASE_EVT,          /*!< When a button has been released after 2s, the event comes */
-    POD_BUTTON_5SEC_RELEASE_EVT,          /*!< When a button has been released after 5s, the event comes */
+    POD_BUTTON_TAP_EVT,                     /*!< When a button has been TAP event (=released), the event comes */
+    POD_BUTTON_2SEC_RELEASE_EVT,            /*!< When a button has been released after 2s, the event comes */
+    POD_BUTTON_5SEC_RELEASE_EVT,            /*!< When a button has been released after 5s, the event comes */
     //
     POD_EVENT_MAX
 } blepod_cb_event_t;
