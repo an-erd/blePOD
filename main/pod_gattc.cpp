@@ -124,6 +124,13 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
             if ((err = param->scan_start_cmpl.status) != ESP_BT_STATUS_SUCCESS) {
                 ESP_LOGE(TAG, "Scan start failed: %s", esp_err_to_name(err));
             }
+            snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+            pod_screen_status_update_ble(&pod_screen_status, BLE_CONNECTED, buffer);
+            xEventGroupClearBits(pod_evg, POD_BLE_SCANNING_BIT | POD_BLE_CONNECTING_BIT);
+            xEventGroupSetBits(pod_evg, POD_BLE_CONNECTED_BIT);
+            xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+
+            ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_BLE_DEVICE_DONE_EVT, NULL, 0, portMAX_DELAY));
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
             ESP_LOGI(TAG, "ESP_GAP_BLE_ADV_START_COMPLETE_EVT");
@@ -167,7 +174,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
                         new_queue_element.data.ble_adv.minor        = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_vendor.minor);
                         new_queue_element.data.ble_adv.measured_power = scan_result->scan_rst.rssi;
                         new_queue_element.data.ble_adv.temp         = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.temp)/10.;
-                        new_queue_element.data.ble_adv.humidity     = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_vendor.minor);
+                        new_queue_element.data.ble_adv.humidity     = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.humidity);
                         new_queue_element.data.ble_adv.x            = (int16_t)ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.x);
                         new_queue_element.data.ble_adv.y            = (int16_t)ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.y);
                         new_queue_element.data.ble_adv.z            = (int16_t)ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.z);
@@ -233,7 +240,7 @@ void pod_ble_initialize()
     ESP_LOGD(TAG, "pod_ble_initialize >");
 
     snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
-    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    pod_screen_status_update_ble(&pod_screen_status, BLE_SEARCHING, buffer);
     xEventGroupSetBits(pod_evg, POD_BLE_SCANNING_BIT);
     xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
 
@@ -279,7 +286,7 @@ void pod_ble_app_register()
     ESP_LOGD(TAG, "pod_ble_app_register >");
 
     snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
-    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    pod_screen_status_update_ble(&pod_screen_status, BLE_CONNECTING, buffer);
     xEventGroupClearBits(pod_evg, POD_BLE_SCANNING_BIT);
     xEventGroupSetBits(pod_evg, POD_BLE_CONNECTING_BIT);
     xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
@@ -301,10 +308,10 @@ void pod_ble_start_scanning()
 
     esp_ble_gap_set_scan_params(&ble_scan_params);
 
-    snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
-    pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
-    xEventGroupClearBits(pod_evg, POD_BLE_CONNECTING_BIT);
-    xEventGroupSetBits(pod_evg, POD_BLE_CONNECTED_BIT);
-    xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+    // snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
+    // pod_screen_status_update_ble(&pod_screen_status, BLE_NOT_CONNECTED, buffer);
+    // xEventGroupClearBits(pod_evg, POD_BLE_CONNECTING_BIT);
+    // xEventGroupSetBits(pod_evg, POD_BLE_CONNECTED_BIT);
+    // xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
     ESP_LOGD(TAG, "pod_ble_start_scanning <");
 }

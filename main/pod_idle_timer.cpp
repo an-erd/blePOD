@@ -9,6 +9,11 @@ static bool         s_running   = false;
 
 void pod_idle_timer_set(uint32_t duration_ms)
 {
+    if(duration_ms == 0){
+        s_running = false;
+        return;
+    }
+
     s_duration = duration_ms;
     pod_touch_timer();
     s_running = true;

@@ -319,6 +319,9 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
                 xEventGroupSetBits(pod_evg, POD_BTN_C_CNT_BIT);
                 cont = true;
             }
+
+            ESP_LOGD(TAG, "POD_STARTUP_COMPLETE_EVT: retryWifi %d, retryBLE %d, cont %d", retryWifi, retryBLE, cont);
+
             if(retryWifi && retryBLE && (!cont)){
                 pod_screen_status_update_statustext(&pod_screen_status, true, "Retry WiFi or BLE?");
             } else if(retryWifi && (!retryBLE) && cont){
@@ -344,12 +347,10 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
             ESP_LOGV(TAG, "POD_GO_TO_DATA_SCREEN_EVT");
             xEventGroupSetBits(pod_evg, POD_DATA_SCREEN_BIT);
             pod_screen_change(&pod_screen_status, SCREEN_DATA);
-            pod_screen_status_update_button(&pod_screen_status, BUTTON_A, true, "Beep");
-            pod_screen_status_update_button(&pod_screen_status, BUTTON_B, true, "Flash");
+            pod_screen_status_update_button(&pod_screen_status, BUTTON_A, true, "A");
+            pod_screen_status_update_button(&pod_screen_status, BUTTON_B, true, "B");
             pod_screen_status_update_button(&pod_screen_status, BUTTON_C, true, "Back");
             xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
-    		// pod_timer_start_metronome();
-            // pod_timer_start_heartbeat();
             pod_idle_timer_set(CONFIG_IDLE_TIME_DATA_SCREEN * 1000);
             break;
         case POD_BLE_DISCONNECT_EVT:
@@ -365,9 +366,7 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
             }
             break;
         //
-        case POD_BUTTON_TAP_EVT:
-        {
-            /*
+        case POD_BUTTON_TAP_EVT: {
             button_unit_t button_unit = *(button_unit_t*) event_data;
             ESP_LOGV(TAG, "POD_BUTTON_TAP_EVT, button id %d", button_unit.btn_id);
 
@@ -378,6 +377,7 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
                     & (POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT))){
                 switch(button_unit.btn_id){
                     case BUTTON_A:
+                        // Retry WiFI
                         if((xEventGroupWaitBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT, pdFALSE, pdFALSE, 0) & POD_BTN_A_RETRY_WIFI_BIT)){
                             xEventGroupClearBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT);
                             xEventGroupSetBits(pod_evg, POD_WIFI_RETRY_BIT);
@@ -388,130 +388,64 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
                             ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_SPLASH_AND_NETWORK_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
                         }
                         break;
-                case BUTTON_B:
-                    if((xEventGroupWaitBits (pod_evg, POD_BTN_B_RETRY_BLE_BIT, pdFALSE, pdFALSE, 0) & POD_BTN_B_RETRY_BLE_BIT)){
-                        xEventGroupClearBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT);
-                        xEventGroupSetBits  (pod_evg, POD_BLE_RETRY_BIT);
-                        pod_screen_status_update_statustext(&pod_screen_status, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_A, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_B, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_C, false, "");
-                        ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_SD_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
-                    }
-                    break;
-                case BUTTON_C:
-                    if((xEventGroupWaitBits (pod_evg, POD_BTN_C_CNT_BIT, pdFALSE, pdFALSE, 0) & POD_BTN_C_CNT_BIT)){
-                        xEventGroupClearBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT);
-                        pod_screen_status_update_statustext(&pod_screen_status, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_A, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_B, false, "");
-                        pod_screen_status_update_button    (&pod_screen_status, BUTTON_C, false, "");
-                        ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_GO_TO_DATA_SCREEN_EVT, NULL, 0, portMAX_DELAY));
-                        // open new data value file
-                        pod_archiver_set_new_file();
+                    case BUTTON_B:
+                        // Retry WiFI
+                        if((xEventGroupWaitBits (pod_evg, POD_BTN_B_RETRY_BLE_BIT, pdFALSE, pdFALSE, 0) & POD_BTN_B_RETRY_BLE_BIT)){
+                            xEventGroupClearBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT);
+                            xEventGroupSetBits  (pod_evg, POD_BLE_RETRY_BIT);
+                            pod_screen_status_update_statustext(&pod_screen_status, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_A, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_B, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_C, false, "");
+                            ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_SD_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
+                        }
+                        break;
+                    case BUTTON_C:
+                        // Cont.
+                        if((xEventGroupWaitBits (pod_evg, POD_BTN_C_CNT_BIT, pdFALSE, pdFALSE, 0) & POD_BTN_C_CNT_BIT)){
+                            xEventGroupClearBits(pod_evg, POD_BTN_A_RETRY_WIFI_BIT | POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT);
+                            pod_screen_status_update_statustext(&pod_screen_status, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_A, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_B, false, "");
+                            pod_screen_status_update_button    (&pod_screen_status, BUTTON_C, false, "");
+                            ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_GO_TO_DATA_SCREEN_EVT, NULL, 0, portMAX_DELAY));
+                            // open new data value file
+                            pod_archiver_set_new_file();
 
-    					// Test data generation, when entering running screen
-    					// xEventGroupSetBits(dispod_sd_evg, DISPOD_SD_GENERATE_TESTDATA_EVT);
-                    }
+        					// Test data generation, when entering running screen
+        					// xEventGroupSetBits(dispod_sd_evg, DISPOD_SD_GENERATE_TESTDATA_EVT);
+                        }
+                        break;
+                    default:
+                        ESP_LOGW(TAG, "unhandled button");
+                        break;
+                }
+            }
+
+            // showing data screen
+            if((xEventGroupWaitBits(pod_evg, POD_DATA_SCREEN_BIT, pdFALSE, pdFALSE, 0) & POD_DATA_SCREEN_BIT)){
+                switch(button_unit.btn_id){
+                    case BUTTON_A:
                     break;
-                default:
-                    ESP_LOGW(TAG, "unhandled button");
+                    case BUTTON_B:
+                    break;
+                    case BUTTON_C:
+                        s_leave_data_screen();
+			        	// ESP_LOGD(TAG, "Archiver: POD_SD_WRITE_COMPLETED_BUFFER_EVT | POD_SD_WRITE_ALL_BUFFER_EVT");
+			        	// xEventGroupSetBits(pod_sd_evg, POD_SD_WRITE_COMPLETED_BUFFER_EVT | POD_SD_WRITE_ALL_BUFFER_EVT);
+                    break;
+                    default:
+                        ESP_LOGW(TAG, "unhandled button");
                     break;
                 }
             }
-            // showing data screen
-            if((xEventGroupWaitBits(pod_evg, POD_DATA_SCREEN_BIT, pdFALSE, pdFALSE, 0) & POD_DATA_SCREEN_BIT)){
-                // // if(!(xEventGroupWaitBits(pod_evg, POD_RUNNING_SCREEN_VOL_BIT, pdFALSE, pdFALSE, 0) & POD_RUNNING_SCREEN_VOL_BIT)){
-                //     switch(button_unit.btn_id){
-                //         case BUTTON_A:
-                //         //     // Toggle Metronome/Sound
-                //         //     if((xEventGroupWaitBits(pod_evg, POD_METRO_SOUND_ACT_BIT, pdFALSE, pdFALSE, 0) & POD_METRO_SOUND_ACT_BIT)){
-                //         //         xEventGroupClearBits(pod_evg, POD_METRO_SOUND_ACT_BIT);
-                //         //     } else {
-                //         //         xEventGroupSetBits(pod_evg, POD_METRO_SOUND_ACT_BIT);
-                //         //     }
-                //         break;
-                //         case BUTTON_B:
-                //         //     // Toggle Metronome/Light
-                //         //     if((xEventGroupWaitBits(pod_evg, POD_METRO_LIGHT_ACT_BIT, pdTRUE, pdFALSE, 0) & POD_METRO_LIGHT_ACT_BIT)){
-                //         //         xEventGroupSetBits(pod_evg, POD_METRO_LIGHT_TOGGLE_ACT_BIT);
-                //         //         pixels.ClearTo(NEOPIXEL_black);
-                //         //         pixels.Show();
-                //         //     } else if ((xEventGroupWaitBits(pod_evg, POD_METRO_LIGHT_TOGGLE_ACT_BIT, pdTRUE, pdFALSE, 0) & POD_METRO_LIGHT_TOGGLE_ACT_BIT)) {
-                //         //         xEventGroupClearBits(pod_evg, POD_METRO_LIGHT_ACT_BIT | POD_METRO_LIGHT_TOGGLE_ACT_BIT);
-                //         //     } else {
-                //         //         xEventGroupSetBits(pod_evg, POD_METRO_LIGHT_ACT_BIT);
-                //         //     }
-                //         break;
-                //         case BUTTON_C:
-                //         //     s_leave_running_screen();
-    			//         // 	ESP_LOGD(TAG, "Archiver: POD_SD_WRITE_COMPLETED_BUFFER_EVT | POD_SD_WRITE_ALL_BUFFER_EVT");
-    			//         // 	xEventGroupSetBits(pod_sd_evg, POD_SD_WRITE_COMPLETED_BUFFER_EVT | POD_SD_WRITE_ALL_BUFFER_EVT);
-                //         break;
-                //         default:
-                //             ESP_LOGW(TAG, "unhandled button");
-                //         break;
-                //     } else {
-                //         switch(button_unit.btn_id){
-                //     char buffer[64];
-                //     case BUTTON_A:
-                //         // // Volume "-"
-                //         // if(pod_screen_status.volume){
-                //         //     pod_screen_status.volume--;
-                //         //     snprintf(buffer, 64, STATUS_VOLUME_FORMAT, pod_screen_status.volume);
-                //         //     pod_screen_status_update_statustext(&pod_screen_status, true, buffer);
-                //         //     xEventGroupSetBits(pod_display_evg, pod_evgPOD_DISPLAY_UPDATE_BIT);
-                //         // }
-                //         break;
-                //     case BUTTON_B:
-                //         // // Volume "+"
-                //         // if(dispod_screen_status.volume < 15){
-                //         //     dispod_screen_status.volume++;
-                //         //     snprintf(buffer, 64, STATUS_VOLUME_FORMAT, dispod_screen_status.volume);
-                //         //     dispod_screen_status_update_statustext(&dispod_screen_status, true, buffer);
-                //         //     xEventGroupSetBits(dispod_display_evg, DISPOD_DISPLAY_UPDATE_BIT);
-                //         // }
-                //         break;
-                //     case BUTTON_C:
-                //         // // Leave Volume
-                //         // xEventGroupClearBits(pod_evg, DISPOD_RUNNING_SCREEN_VOL_BIT);
-                //         // dispod_screen_status_update_statustext(&dispod_screen_status, false, "");
-                //         // dispod_screen_status_update_button(&dispod_screen_status, BUTTON_A, true, "Beep");
-                //         // dispod_screen_status_update_button(&dispod_screen_status, BUTTON_B, true, "Flash");
-                //         // dispod_screen_status_update_button(&dispod_screen_status, BUTTON_C, true, "Back");
-
-                //         // ret = iot_param_load(PARAM_NAMESPACE, PARAM_KEY, &dispod_param);
-                //         // if(ret == ESP_OK){
-                //         //     ESP_LOGI(TAG, "DISPOD_STARTUP_EVT: read param ok, read volume %u", dispod_param.volume);
-                //         // } else {
-                //         //     ESP_LOGE(TAG, "Leave volume screen: read param failed, ret = %d", ret);
-                //         //     dispod_param.volume = 999;
-                //         // }
-                //         // if(dispod_param.volume != dispod_screen_status.volume){
-                //         //     dispod_param.volume = dispod_screen_status.volume;
-                //         //     ESP_LOGI(TAG, "Leave volume screen: write param volume %u", dispod_param.volume);
-                //         //     iot_param_save(PARAM_NAMESPACE, PARAM_KEY, &dispod_param, sizeof(param_t));
-                //         // }
-                //         // xEventGroupSetBits(dispod_display_evg, DISPOD_DISPLAY_UPDATE_BIT);
-                //         break;
-                //     default:
-                //         ESP_LOGW(TAG, "unhandled button");
-                //         break;
-                //     }
-                // }
-                */
-        }
-        break;
-        case POD_BUTTON_2SEC_RELEASE_EVT:
-        {
+            }
+            break;
+        case POD_BUTTON_2SEC_RELEASE_EVT:{
             button_unit_t button_unit = *(button_unit_t*) event_data;
             ESP_LOGV(TAG, "POD_BUTTON_2SEC_PRESS_EVT, button id %d", button_unit.btn_id);
 
             pod_touch_timer();
-
-            // showing status screen with WiFi available -> allow for OTA
-            if((xEventGroupWaitBits(pod_evg, POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT, pdFALSE, pdFALSE, 0)
-                   & ( POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT))){
 
             // showing status screen with WiFi available -> allow for OTA
             if((xEventGroupWaitBits(pod_evg, POD_BTN_B_RETRY_BLE_BIT | POD_BTN_C_CNT_BIT, pdFALSE, pdFALSE, 0)
@@ -537,15 +471,12 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
             }
             }
             break;
-        }
-        break;
-        case POD_BUTTON_5SEC_RELEASE_EVT:
-        {
+        case POD_BUTTON_5SEC_RELEASE_EVT:{
             button_unit_t button_unit = *(button_unit_t*) event_data;
             ESP_LOGV(TAG, "POD_BUTTON_5SEC_PRESS_EVT, button id %d", button_unit.btn_id);
             // unused yet
             pod_touch_timer();
-        }
+            }
             break;
         default:
             ESP_LOGW(TAG, "unhandled event base/id %s:%d", base, id);
@@ -577,6 +508,9 @@ extern "C" void app_main()
     pod_display_evg = xEventGroupCreate();
     pod_sd_evg      = xEventGroupCreate();
     pod_timer_evg   = xEventGroupCreate();
+
+    // pod values initialize
+    pod_values_initialize();
 
     // create BLE adv queue to get BLE notification decoded and put into this queue
     values_queue = xQueueCreate( 10, sizeof( queue_element_t ) );

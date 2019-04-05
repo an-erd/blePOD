@@ -1,5 +1,4 @@
 #include <string.h>
-#include <math.h>
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -11,8 +10,6 @@
 #include "driver/gpio.h"
 #include "Free_Fonts.h"
 #include "pod_main.h"
-#include "pod_tft.h"
-//#include "pod_gattc.h"
 
 static const char* TAG = "POD_TFT";
 
@@ -34,6 +31,7 @@ static const char* TAG = "POD_TFT";
 
 // layout measures for data screen
 #define TEXT_HEIGHT_RUNNING             42
+#define TEXT_HEIGHT_DATA                42
 #define DATA_SPRITE_WIDTH               320
 #define DATA_SPRITE_HEIGHT              42
 
@@ -50,6 +48,9 @@ typedef enum {
     SCREEN_OVERARCHING_STATUS,
     SCREEN_OVERARCHING_STATS,
     SCREEN_OVERARCHING_BUTTON,
+    SCREEN_DATA_ADV1,
+    SCREEN_DATA_ADV2,
+    SCREEN_DATA_ADV3,
     SCREEN_NUM_SPRITES,             // number of sprites necessary
 } screen_block_t;
 
@@ -95,6 +96,10 @@ void pod_screen_status_initialize(pod_screen_status_t *params)
     spr[SCREEN_OVERARCHING_STATUS]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
     spr[SCREEN_OVERARCHING_STATS]->createSprite (STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
     spr[SCREEN_OVERARCHING_BUTTON]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
+
+    spr[SCREEN_DATA_ADV1]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
+    spr[SCREEN_DATA_ADV2]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
+    spr[SCREEN_DATA_ADV3]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
 }
 
 // function to change screen
@@ -296,6 +301,7 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
     spr[SCREEN_OVERARCHING_BUTTON]->pushSprite(0, ypos);
 }
 
+/*
 // static void s_draw_fields(TFT_eSprite *spr, char* name, uint8_t numFields, float f_current, bool first_sprite_draw)
 // {
 //     bool        inInterval;
@@ -406,58 +412,82 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
 // 	// middle circle
 // 	spr->fillCircle(xTarget, INDICATOR_BASE_Y, INDICATOR_TARGET_CIRCLE_RADIUS, tmp_color);
 // }
+*/
 
-// void pod_screen_running_update_display(pod_screen_status_t *params, bool complete) {
-// 	runningValuesStruct_t* values = &running_values;
+static void s_draw_adv_overview(TFT_eSprite *spr,  uint8_t idx, bool first_sprite_draw)
+{
+    char        buffer[128];
 
-//     uint16_t ypos;
-//     char buffer[64];
+    if(first_sprite_draw){
+        spr->setFreeFont(FF17);
+        spr->setTextColor(TFT_WHITE, TFT_BLACK);
+        spr->setTextDatum(TL_DATUM);
+        spr->fillSprite(TFT_BLACK);
 
-//     if(complete) {
-//         M5.Lcd.fillScreen(TFT_BLACK);
-//         M5.Lcd.setFreeFont(FF19);
-//         M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-//     }
+        // draw field title
+        // spr->drawString(name, XPAD, 0, GFXFF);
+    }
 
-//     // 1-3) Cadence, GCT, Strike
-//     s_draw_indicator(spr[SCREEN_BLOCK_RUNNING_CAD], "Cad", true, MIN_INTERVAL_CADENCE - 20, MAX_INTERVAL_CADENCE + 20, values->values_to_display.cad, MIN_INTERVAL_CADENCE, MAX_INTERVAL_CADENCE, complete);
-//     s_draw_indicator(spr[SCREEN_BLOCK_RUNNING_GCT], "GCT", true, MIN_INTERVAL_STANCETIME, 260, values->values_to_display.GCT, MIN_INTERVAL_STANCETIME, MAX_INTERVAL_STANCETIME, complete);
-//     s_draw_fields(spr[SCREEN_BLOCK_RUNNING_STR],    "Str", 3, values->values_to_display.str / 10., complete);
+    spr->fillSprite(TFT_BLACK);
+    snprintf(buffer, 128, ADV_DATA_FORMAT,  // ADV_DATA_FORMAT         "%s: %3d %5.1f %3d %4d"
+         ble_beacon_data[idx].name,
+         ble_adv_data[idx].measured_power,
+         ble_adv_data[idx].temp,
+         ble_adv_data[idx].humidity,
+         ble_adv_data[idx].battery);
+    spr->drawString(buffer, 0, 0, GFXFF);
+}
 
-//     // 4) Statistics text line
-//     snprintf(buffer, 64, STATS_QUEUE_FORMAT,
-//         params->q_status.max_len, params->q_status.messages_send, params->q_status.messages_received, params->q_status.messages_failed);
-//     s_draw_status_text(spr[SCREEN_OVERARCHING_STATS], params->show_q_status, buffer, complete);
+void pod_screen_data_update_display(pod_screen_status_t *params, bool complete) {
 
-//     // 5) Status text line
-//     s_draw_status_text(spr[SCREEN_OVERARCHING_STATUS], params->show_status_text, params->status_text, complete);
+    uint16_t ypos;
+    char buffer[64];
 
-// 	// 6) Button label
-//     s_draw_button_label(spr[SCREEN_OVERARCHING_BUTTON],
-//         params->show_button[BUTTON_A], params->button_text[BUTTON_A],
-//         params->show_button[BUTTON_B], params->button_text[BUTTON_B],
-//         params->show_button[BUTTON_C], params->button_text[BUTTON_C], complete);
+    if(complete) {
+        M5.Lcd.fillScreen(TFT_BLACK);
+        M5.Lcd.setFreeFont(FF19);
+        M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+    }
 
-//     // push all sprites
-//     ypos = YPAD;
-//     spr[SCREEN_BLOCK_RUNNING_CAD]->pushSprite(0, ypos);
-// 	ypos += RUNNING_SPRITE_HEIGHT + YPAD;
+    // 1-3) beacon data, 3 lines
+    s_draw_adv_overview(spr[SCREEN_DATA_ADV1], 0, true);
+    s_draw_adv_overview(spr[SCREEN_DATA_ADV2], 1, true);
+    s_draw_adv_overview(spr[SCREEN_DATA_ADV3], 2, true);
 
-//     spr[SCREEN_BLOCK_RUNNING_GCT]->pushSprite(0, ypos);
-//     ypos += RUNNING_SPRITE_HEIGHT + YPAD;
+    // 4) Statistics text line
+    snprintf(buffer, 64, STATS_QUEUE_FORMAT,
+        params->q_status.max_len, params->q_status.messages_send, params->q_status.messages_received, params->q_status.messages_failed);
+    s_draw_status_text(spr[SCREEN_OVERARCHING_STATS], params->show_q_status, buffer, complete);
 
-//     spr[SCREEN_BLOCK_RUNNING_STR]->pushSprite(0, ypos);
-//     ypos += RUNNING_SPRITE_HEIGHT + YPAD;
+    // 5) Status text line
+    s_draw_status_text(spr[SCREEN_OVERARCHING_STATUS], params->show_status_text, params->status_text, complete);
 
-//     spr[SCREEN_OVERARCHING_STATS]->pushSprite(0, ypos);
-//     ypos += STATUS_SPRITE_HEIGHT + YPAD + YPAD;
+	// 6) Button label
+    s_draw_button_label(spr[SCREEN_OVERARCHING_BUTTON],
+        params->show_button[BUTTON_A], params->button_text[BUTTON_A],
+        params->show_button[BUTTON_B], params->button_text[BUTTON_B],
+        params->show_button[BUTTON_C], params->button_text[BUTTON_C], complete);
 
-//     spr[SCREEN_OVERARCHING_STATUS]->pushSprite(0, ypos);
+    // push all sprites
+    ypos = YPAD;
+    spr[SCREEN_DATA_ADV1]->pushSprite(0, ypos);
+	ypos += STATUS_SPRITE_HEIGHT + YPAD;
 
-//     ypos = 240 - STATUS_SPRITE_HEIGHT;
-//     spr[SCREEN_OVERARCHING_BUTTON]->pushSprite(0, ypos);
-// 	// ESP_LOGD(TAG, "updateDisplayWithRunningValues: cad %3u stance %3u strike %1u", values->values_to_display.cad, values->values_to_display.GCT, values->values_to_display.str);
-// }
+    spr[SCREEN_DATA_ADV2]->pushSprite(0, ypos);
+    ypos += STATUS_SPRITE_HEIGHT + YPAD;
+
+    spr[SCREEN_DATA_ADV3]->pushSprite(0, ypos);
+    ypos += STATUS_SPRITE_HEIGHT + YPAD;
+
+    spr[SCREEN_OVERARCHING_STATS]->pushSprite(0, ypos);
+    ypos += STATUS_SPRITE_HEIGHT + YPAD + YPAD;
+
+    spr[SCREEN_OVERARCHING_STATUS]->pushSprite(0, ypos);
+
+    ypos = 240 - STATUS_SPRITE_HEIGHT;
+    spr[SCREEN_OVERARCHING_BUTTON]->pushSprite(0, ypos);
+	// ESP_LOGD(TAG, "updateDisplayWithRunningValues: cad %3u stance %3u strike %1u", values->values_to_display.cad, values->values_to_display.GCT, values->values_to_display.str);
+}
 
 void pod_screen_status_update_queue(pod_screen_status_t *params, uint8_t cur_len, bool inc_send, bool inc_received, bool inc_failed)
 {
@@ -515,7 +545,7 @@ void pod_screen_task(void *pvParameters)
                 params->current_screen = params->screen_to_show;
                 complete = true;
             }
-            // pod_screen_running_update_display(params, complete);
+            pod_screen_data_update_display(params, complete);
             break;
         case SCREEN_CONFIG:
             ESP_LOGW(TAG, "pod_screen_task: SCREEN_CONFIG - not available yet");
