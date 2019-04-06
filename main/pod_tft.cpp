@@ -39,7 +39,7 @@ static const char* TAG = "POD_TFT";
 
 EventGroupHandle_t pod_display_evg;
 
-// sprites for blocks in status screen and running screen
+// sprites for blocks in status screen and data screen
 typedef enum {
     SCREEN_BLOCK_STATUS_WIFI = 0,
     SCREEN_BLOCK_STATUS_NTP,
@@ -84,7 +84,7 @@ void pod_screen_status_initialize(pod_screen_status_t *params)
     // voloume
     params->volume                      = 1;
 
-    // create sprites for the building blocks of the status/running screens
+    // create sprites for the building blocks of the status/data screens
     for (int i = 0; i < SCREEN_NUM_SPRITES; i++){
         spr[i] = new TFT_eSprite(&M5.Lcd);
     }
@@ -301,119 +301,6 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
     spr[SCREEN_OVERARCHING_BUTTON]->pushSprite(0, ypos);
 }
 
-/*
-// static void s_draw_fields(TFT_eSprite *spr, char* name, uint8_t numFields, float f_current, bool first_sprite_draw)
-// {
-//     bool        inInterval;
-//     uint16_t    current;
-//     uint32_t    tmp_color;
-//     char        buffer[32];
-
-//     if(first_sprite_draw){
-//         spr->setFreeFont(FF19);
-//         spr->setTextColor(TFT_WHITE, TFT_BLACK);
-//         spr->setTextDatum(TL_DATUM);
-//         spr->fillSprite(TFT_BLACK);
-
-//         // draw field title
-//         spr->drawString(name, XPAD, 0, GFXFF);
-//     }
-
-//     // clear all but name
-//     spr->fillRect(XPAD+75, 0, 320-XPAD-75, RUNNING_SPRITE_HEIGHT, TFT_BLACK);
-
-//     // frame
-// 	spr->drawRect(FIELD_MIN_X, FIELD_BASE_Y - FIELD_HALFHEIGHT, FIELD_WIDTH, 2 * FIELD_HALFHEIGHT, TFT_WHITE);
-
-//     // determine current field and wheter in interval and print
-//     current = (uint16_t) round(f_current);
-// 	inInterval = (current >= 1) && (current <= 2);
-//     tmp_color = (inInterval ? TFT_GREEN : TFT_RED);
-//     spr->setTextColor(tmp_color, TFT_BLACK);
-//     sprintf(buffer, "%1.1f", f_current);
-
-//     // draw field value
-//     spr->setTextDatum(TR_DATUM);
-//     spr->drawString(buffer, VAL_X_RUNNING_TR, 0, GFXFF);
-//     spr->setTextDatum(TL_DATUM);
-
-// 	// draw ticks
-// 	uint8_t deltaX = FIELD_WIDTH / numFields;
-// 	for (int i = 0; i < numFields; i++)
-// 		spr->drawLine(FIELD_MIN_X + i * deltaX, FIELD_BASE_Y - FIELD_HALFHEIGHT, FIELD_MIN_X + i * deltaX, FIELD_BASE_Y + FIELD_HALFHEIGHT - 1, TFT_WHITE);
-
-// 	// mark current
-//     uint16_t tmp_width = deltaX - 3 + (current == (numFields-1) ? 1 : 0);
-// 	spr->fillRect(FIELD_MIN_X + current * deltaX + 2, FIELD_BASE_Y - FIELD_HALFHEIGHT + 2, tmp_width, 2 * FIELD_HALFHEIGHT - 4, tmp_color);
-//     spr->setTextColor(TFT_WHITE, TFT_BLACK);
-// }
-
-// static void s_draw_indicator(TFT_eSprite *spr, char* name, bool print_value,
-// 	int16_t valMin, int16_t valMax, int16_t curVal,
-// 	int16_t lowInterval, int16_t highInterval,
-//     bool first_sprite_draw)
-// {
-//     assert(INDICATOR_ADJ_MIN_X < INDICATOR_ADJ_MAX_X);
-//     assert(lowInterval < highInterval);
-
-//     bool        inInterval;
-//     uint32_t    tmp_color;
-//     char        buffer[32];
-
-//     if(first_sprite_draw){
-//         spr->setFreeFont(FF19);
-//         spr->setTextColor(TFT_WHITE, TFT_BLACK);
-//         spr->setTextDatum(TL_DATUM);
-//         spr->fillSprite(TFT_BLACK);
-
-//         // draw field title
-//         spr->drawString(name, XPAD, 0, GFXFF);
-//     }
-
-//     // clear all but name
-//     spr->fillRect(XPAD+75, 0, 320-XPAD-75, RUNNING_SPRITE_HEIGHT, TFT_BLACK);
-
-// 	// current values out of range -> move into range
-// 	uint16_t adjCurVal = curVal;
-// 	if (curVal < valMin) adjCurVal = valMin;
-// 	if (curVal > valMax) adjCurVal = valMax;
-
-// 	// calculate x base coordinates
-// 	uint16_t xLowInterval   = __map(lowInterval,  valMin, valMax, INDICATOR_ADJ_MIN_X,     INDICATOR_ADJ_MAX_X);
-// 	uint16_t xHighInterval  = __map(highInterval, valMin, valMax, INDICATOR_ADJ_MIN_X,     INDICATOR_ADJ_MAX_X);
-// 	uint16_t xTarget        = __map(adjCurVal,    valMin, valMax, INDICATOR_ADJ_MIN_X + 2, INDICATOR_ADJ_MAX_X - 2);
-
-// 	// check if the current value is in target interval
-// 	inInterval = (curVal >= lowInterval) && (curVal <= highInterval);
-//     tmp_color = (inInterval ? TFT_GREEN : TFT_RED);
-//     spr->setTextColor(tmp_color, TFT_BLACK);
-
-//     // show value
-//     if(print_value){
-//         sprintf(buffer, "%u", curVal);
-//         spr->setTextDatum(TR_DATUM);
-//         spr->drawString(buffer, VAL_X_RUNNING_TR, 0, GFXFF);
-//         spr->setTextDatum(TL_DATUM);
-//     }
-// 	spr->setTextColor(TFT_WHITE, TFT_BLACK);
-
-// 	// baseline, from INDICATOR_MIN_X to INDICATOR_MAX_X
-// 	spr->drawLine(INDICATOR_MIN_X+2, INDICATOR_BASE_Y, INDICATOR_MAX_X-2, INDICATOR_BASE_Y, TFT_WHITE);
-
-// 	// show rounded rectangle (first fill w/background, then draw w/foreground color)
-// 	spr->fillRoundRect(
-// 		xLowInterval - INDICATOR_TARGET_CIRCLE_RADIUS - 2, INDICATOR_BASE_Y - INDICATOR_TARGET_CIRCLE_RADIUS-2,		    // x0, y0 (top left corner)
-// 		xHighInterval - xLowInterval + 2 * INDICATOR_TARGET_CIRCLE_RADIUS + 4, 5 + 2 * INDICATOR_TARGET_CIRCLE_RADIUS,	// w, h
-// 		INDICATOR_TARGET_CIRCLE_RADIUS, TFT_BLACK);														                // radius, color
-// 	spr->drawRoundRect(
-// 		xLowInterval - INDICATOR_TARGET_CIRCLE_RADIUS - 2, INDICATOR_BASE_Y - INDICATOR_TARGET_CIRCLE_RADIUS-2,		    // x0, y0 (top left corner)
-// 		xHighInterval - xLowInterval + 2 * INDICATOR_TARGET_CIRCLE_RADIUS + 4, 5 + 2 * INDICATOR_TARGET_CIRCLE_RADIUS,  // w, h
-// 		INDICATOR_TARGET_CIRCLE_RADIUS, TFT_WHITE);														                // radius, color
-// 	// middle circle
-// 	spr->fillCircle(xTarget, INDICATOR_BASE_Y, INDICATOR_TARGET_CIRCLE_RADIUS, tmp_color);
-// }
-*/
-
 static void s_draw_adv_overview(TFT_eSprite *spr,  uint8_t idx, bool first_sprite_draw)
 {
     char buffer[128];
@@ -430,17 +317,34 @@ static void s_draw_adv_overview(TFT_eSprite *spr,  uint8_t idx, bool first_sprit
     }
 
     spr->fillSprite(TFT_BLACK);
-    snprintf(buffer, 128, ADV_DATA_FORMAT,  // ADV_DATA_FORMAT         "%s: %3d %5.1f %3d %4d"
-         ble_beacon_data[idx].name,
-         ble_adv_data[idx].measured_power,
-         ble_adv_data[idx].temp,
-         ble_adv_data[idx].humidity,
-         ble_adv_data[idx].battery);
+    snprintf(buffer, 128, ADV_DATA_FORMAT,  // ADV_DATA_FORMAT  "%s: %3d %+5.1f %3d %4d %+4.1f %+4.1f %+4.1f"
+        ble_beacon_data[idx].name,
+        ble_adv_data[idx].measured_power,
+        ble_adv_data[idx].temp,
+        ble_adv_data[idx].humidity,
+        ble_adv_data[idx].battery,
+        ble_adv_data[idx].x/16384.,
+        ble_adv_data[idx].y/16384.,
+        ble_adv_data[idx].z/16384.);
     spr->drawString(buffer, 0, 0, GFXFF);
+
+    ESP_LOGD(TAG, "(0x%04x%04x) rssi %3d | temp %5.1f | hum %3d | x %+4.1f | y %+4.1f | z %+4.1f | batt %4d",
+        ble_beacon_data[idx].major, ble_beacon_data[idx].minor,
+        ble_adv_data[idx].measured_power,
+        ble_adv_data[idx].temp,
+        ble_adv_data[idx].humidity,
+        ble_adv_data[idx].x/16384.,
+        ble_adv_data[idx].y/16384.,
+        ble_adv_data[idx].z/16384.,
+        ble_adv_data[idx].battery);
+
+    ESP_LOGD(TAG, "raw: x %+6d | y %+6d | z %+6d",
+        ble_adv_data[idx].x,
+        ble_adv_data[idx].y,
+        ble_adv_data[idx].z);
 
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &ble_adv_data[idx].timeinfo);
     ESP_LOGD(TAG, "received from queue to display: time %s, data %s", strftime_buf, buffer);
-
 }
 
 void pod_screen_data_update_display(pod_screen_status_t *params, bool complete) {
@@ -491,7 +395,6 @@ void pod_screen_data_update_display(pod_screen_status_t *params, bool complete) 
 
     ypos = 240 - STATUS_SPRITE_HEIGHT;
     spr[SCREEN_OVERARCHING_BUTTON]->pushSprite(0, ypos);
-	// ESP_LOGD(TAG, "updateDisplayWithRunningValues: cad %3u stance %3u strike %1u", values->values_to_display.cad, values->values_to_display.GCT, values->values_to_display.str);
 }
 
 void pod_screen_status_update_queue(pod_screen_status_t *params, uint8_t cur_len, bool inc_send, bool inc_received, bool inc_failed)
@@ -545,7 +448,7 @@ void pod_screen_task(void *pvParameters)
             pod_screen_status_update_display(params, complete);
             break;
         case SCREEN_DATA:
-            ESP_LOGD(TAG, "pod_screen_task: SCREEN_RUNNING");
+            ESP_LOGD(TAG, "pod_screen_task: SCREEN_DATA");
             if(params->current_screen != params->screen_to_show){
                 params->current_screen = params->screen_to_show;
                 complete = true;

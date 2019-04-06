@@ -15,9 +15,9 @@ typedef struct  {
     int8_t      measured_power;
     float       temp;
     uint16_t    humidity;
-    uint16_t    x;
-    uint16_t    y;
-    uint16_t    z;
+    int16_t     x;
+    int16_t     y;
+    int16_t     z;
     uint16_t    battery;
 } ble_adv_data_t;
 
@@ -39,9 +39,9 @@ typedef union {
         int8_t      measured_power;
         float       temp;
         uint16_t    humidity;
-        uint16_t    x;
-        uint16_t    y;
-        uint16_t    z;
+        int16_t     x;
+        int16_t     y;
+        int16_t     z;
         uint16_t    battery;
     } ble_adv;
 } values_element_t;

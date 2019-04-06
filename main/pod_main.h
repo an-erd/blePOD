@@ -110,7 +110,7 @@ extern pod_screen_status_t pod_screen_status;
 #define WIFI_NAME_FORMAT        "WiFi (%s)"
 #define STATUS_VOLUME_FORMAT    "Volume: %u"
 #define STATS_QUEUE_FORMAT      "Q: max %u, snd %u, rec %u, fail %u"
-#define ADV_DATA_FORMAT         "%s: %3d %5.1f %3d %4d"
+#define ADV_DATA_FORMAT         "%s: %3d %+5.1f %3d %4d %+4.1f %+4.1f %+4.1f"
 
 // SD card
 #define sdPIN_NUM_MISO 19
