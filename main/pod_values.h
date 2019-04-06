@@ -32,7 +32,7 @@ typedef enum {
 // union used to put received data packets into a queue for further work
 typedef union {
     struct ble_adv_element {
-		// struct tm	timeinfo;
+		struct tm	timeinfo;
         // uint8_t     proximity_uuid[4];
         uint16_t    major;
         uint16_t    minor;

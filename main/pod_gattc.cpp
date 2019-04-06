@@ -143,6 +143,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
             ESP_LOGD(TAG, "ESP_GAP_BLE_SCAN_RESULT_EVT");
             queue_element_t new_queue_element;
             BaseType_t xStatus;
+            time_t now;
 
             esp_ble_gap_cb_param_t *scan_result = (esp_ble_gap_cb_param_t *)param;
             switch (scan_result->scan_rst.search_evt) {
@@ -168,8 +169,9 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
                             (int16_t)ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.z),
                             ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_payload.battery) );
 
-                        // dispod_runvalues_update_RSCValues(&running_values, instantaneousCadence);    // TODO
                         new_queue_element.id = ID_BLEADV;
+                        time(&now);
+			            localtime_r(&now, &new_queue_element.data.ble_adv.timeinfo);
                         new_queue_element.data.ble_adv.major        = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_vendor.major);
                         new_queue_element.data.ble_adv.minor        = ENDIAN_CHANGE_U16(mybeacon_data->mybeacon_vendor.minor);
                         new_queue_element.data.ble_adv.measured_power = scan_result->scan_rst.rssi;

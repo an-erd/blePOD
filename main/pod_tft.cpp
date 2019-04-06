@@ -416,7 +416,8 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
 
 static void s_draw_adv_overview(TFT_eSprite *spr,  uint8_t idx, bool first_sprite_draw)
 {
-    char        buffer[128];
+    char buffer[128];
+   	char strftime_buf[64];
 
     if(first_sprite_draw){
         spr->setFreeFont(FF17);
@@ -436,6 +437,10 @@ static void s_draw_adv_overview(TFT_eSprite *spr,  uint8_t idx, bool first_sprit
          ble_adv_data[idx].humidity,
          ble_adv_data[idx].battery);
     spr->drawString(buffer, 0, 0, GFXFF);
+
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &ble_adv_data[idx].timeinfo);
+    ESP_LOGD(TAG, "received from queue to display: time %s, data %s", strftime_buf, buffer);
+
 }
 
 void pod_screen_data_update_display(pod_screen_status_t *params, bool complete) {

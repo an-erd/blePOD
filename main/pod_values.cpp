@@ -60,6 +60,7 @@ void pod_values_update_queue_element(queue_element_t *_queue_element)
     uint16_t min = _queue_element->data.ble_adv.minor;
     uint8_t  idx = beacon_maj_min_to_idx(maj, min);
 
+    ble_adv_data[idx].timeinfo       = _queue_element->data.ble_adv.timeinfo;
     ble_adv_data[idx].measured_power = _queue_element->data.ble_adv.measured_power;
     ble_adv_data[idx].temp           = _queue_element->data.ble_adv.temp;
     ble_adv_data[idx].humidity       = _queue_element->data.ble_adv.humidity;
