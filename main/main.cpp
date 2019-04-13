@@ -57,6 +57,8 @@ static void pod_initialize()
         xEventGroupSetBits(pod_evg, POD_WIFI_ACTIVATED_BIT);
     if(CONFIG_USE_SNTP)
         xEventGroupSetBits(pod_evg, POD_NTP_ACTIVATED_BIT);
+    if(CONFIG_USE_MQTT)
+        xEventGroupSetBits(pod_evg, POD_MQTT_ACTIVATED_BIT);
     if(CONFIG_USE_SD)
         xEventGroupSetBits(pod_evg, POD_SD_ACTIVATED_BIT);
 }
@@ -257,12 +259,26 @@ static void run_on_event(void* handler_arg, esp_event_base_t base, int32_t id, v
                 ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_NTP_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
             } else {
                 // WiFi configured, but not connected, jump to SD mount
-                ESP_LOGV(TAG, "no WiFi connection thus no NTP, connect to BLE next");
+                ESP_LOGV(TAG, "no WiFi connection thus no NTP, do SD and connect to BLE next");
                 ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_NTP_INIT_DONE_EVT, NULL, 0, portMAX_DELAY));
             }
             break;
         case POD_NTP_INIT_DONE_EVT:
             ESP_LOGV(TAG, "POD_NTP_INIT_DONE_EVT");
+            xEventGroupSetBits(pod_display_evg, POD_DISPLAY_UPDATE_BIT);
+            uxBits = xEventGroupWaitBits(pod_evg, POD_WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 0);
+            if(uxBits & POD_WIFI_CONNECTED_BIT){
+                ESP_LOGV(TAG, "WiFi connected, connect MQTT");
+                pod_mqtt_init();
+                ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_MQTT_DONE_EVT, NULL, 0, portMAX_DELAY));
+            } else {
+                // WiFi configured, but not connected, jump to SD mount
+                ESP_LOGV(TAG, "no WiFi connection thus no NTP/MQTT, do SD and connect to BLE next");
+                ESP_ERROR_CHECK(esp_event_post_to(pod_loop_handle, WORKFLOW_EVENTS, POD_MQTT_DONE_EVT, NULL, 0, portMAX_DELAY));
+            }
+            break;
+        case POD_MQTT_DONE_EVT:
+            ESP_LOGV(TAG, "POD_MQTT_DONE_EVT");
             uxBits = xEventGroupWaitBits(pod_evg, POD_SD_ACTIVATED_BIT, pdFALSE, pdFALSE, 0);
             ESP_LOGD(TAG, "uxBits: POD_SD_ACTIVATED_BIT = %u, uxBits = %u", POD_SD_ACTIVATED_BIT, uxBits);
             if( ( uxBits & POD_SD_ACTIVATED_BIT) == POD_SD_ACTIVATED_BIT){
@@ -493,6 +509,12 @@ extern "C" void app_main()
 	esp_log_level_set("nvs",            ESP_LOG_INFO);
 	esp_log_level_set("tcpip_adapter",  ESP_LOG_INFO);
 	esp_log_level_set("BTDM_INIT",      ESP_LOG_INFO);
+    // esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
+    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
     // initialize NVS
     initialize_nvs();

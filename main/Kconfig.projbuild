@@ -75,6 +75,44 @@ menu "blePOD Configuration"
 
     endmenu
 
+    menu "MQTT configuration"
+
+        config USE_MQTT
+            bool "MQTT"
+            depends on USE_WIFI
+            default y
+            help
+                If WiFi and internet are available an mqtt server can be used to forward the measurements to.
+
+        config MQTT_HOST
+            string "MQTT Broker Host"
+            default "iot.eclipse.org"
+            help
+                MQTT Host to connect to
+
+        config MQTT_BROKER_URL
+            string "MQTT Broker URL"
+            default "mqtt://iot.eclipse.org"
+            help
+                URL of the broker to connect to
+
+        config MQTT_PORT
+            int "MQTT port"
+            default 1883
+            help
+                TCP port to connect to
+
+        config MQTT_USERNAME
+            string "MQTT username"
+            help
+                MQTT USERNAME
+
+        config MQTT_PASSWORD
+            string "MQTT password"
+            help
+                MQTT password
+    endmenu
+
     menu "BLE device configuration"
 
         config PROXIMITY_UUID

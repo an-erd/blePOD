@@ -11,6 +11,7 @@
 #include "freertos/event_groups.h"
 #include "freertos/queue.h"
 #include "driver/ledc.h"
+#include "mqtt_client.h"
 #include <M5Stack.h>
 #include <NeoPixelBus.h>
 #include "pod_values.h"
@@ -27,6 +28,7 @@
 #include "pod_tft.h"
 #include "pod_sntp.h"
 #include "pod_gattc.h"
+#include "pod_mqtt.h"
 
 // IOT param
 typedef struct {
@@ -46,19 +48,21 @@ typedef struct {
 #define POD_NTP_ACTIVATED_BIT               (BIT5)      // NTP is activated
 #define POD_NTP_UPDATING_BIT    	        (BIT6)      // NTP update process running
 #define POD_NTP_UPDATED_BIT			        (BIT7)      // NTP time set
-#define POD_BLE_ACTIVATED_BIT               (BIT8)      // BLE is activated
-#define POD_BLE_SCANNING_BIT     	        (BIT9)      // BLE scanning for devices
-#define POD_BLE_CONNECTING_BIT    	        (BIT10)     // BLE connecting to appropriate device
-#define POD_BLE_CONNECTED_BIT               (BIT11)     // BLE connected to device
-#define POD_BLE_RETRY_BIT                   (BIT12)     // Try BLE again
-#define POD_SD_ACTIVATED_BIT                (BIT13)     // SD card is activated
-#define POD_SD_AVAILABLE_BIT                (BIT14)     // SD function available
-#define POD_DATA_LIGHT_ACT_BIT              (BIT15)     // Data w/light output activated
-#define POD_BTN_A_RETRY_WIFI_BIT            (BIT16)     // Retry Wifi in progress
-#define POD_BTN_B_RETRY_BLE_BIT             (BIT17)
-#define POD_BTN_C_CNT_BIT                   (BIT18)     // Continue with flow to next function
-#define POD_DATA_SCREEN_BIT                 (BIT19)     // Diesplay data screen
-#define POD_OTA_RUNNING_BIT                 (BIT20)     // OTA is running and ota_task exists
+#define POD_MQTT_ACTIVATED_BIT              (BIT8)      // MQTT is activated
+#define POD_MQTT_CONNECTED_BIT              (BIT9)      // MQTT is connected
+#define POD_BLE_ACTIVATED_BIT               (BIT10)     // BLE is activated
+#define POD_BLE_SCANNING_BIT     	        (BIT11)     // BLE scanning for devices
+#define POD_BLE_CONNECTING_BIT    	        (BIT12)     // BLE connecting to appropriate device
+#define POD_BLE_CONNECTED_BIT               (BIT13)     // BLE connected to device
+#define POD_BLE_RETRY_BIT                   (BIT14)     // Try BLE again
+#define POD_SD_ACTIVATED_BIT                (BIT15)     // SD card is activated
+#define POD_SD_AVAILABLE_BIT                (BIT16)     // SD function available
+#define POD_DATA_LIGHT_ACT_BIT              (BIT17)     // Data w/light output activated
+#define POD_BTN_A_RETRY_WIFI_BIT            (BIT18)     // Retry Wifi in progress
+#define POD_BTN_B_RETRY_BLE_BIT             (BIT19)
+#define POD_BTN_C_CNT_BIT                   (BIT20)     // Continue with flow to next function
+#define POD_DATA_SCREEN_BIT                 (BIT21)     // Diesplay data screen
+#define POD_OTA_RUNNING_BIT                 (BIT22)     // OTA is running and ota_task exists
 extern EventGroupHandle_t pod_evg;
 
 // POD SD card event group
@@ -77,6 +81,7 @@ typedef enum {
     POD_WIFI_INIT_DONE_EVT,                 /*!< When the WiFi init, not yet completed, the event comes */
     POD_WIFI_GOT_IP_EVT,                    /*!< When the WiFi is connected and got an IP, the event comes */
     POD_NTP_INIT_DONE_EVT,                  /*!< When the NTP update (successfull or failed!) completed, the event comes */
+    POD_MQTT_DONE_EVT,                      /*!< When the MQTT connect (successfull or failed!) completed, the event comes */
     POD_SD_INIT_DONE_EVT,                   /*!< When the SD mount/probe/unmount is completed, the event comes */
     POD_BLE_DEVICE_DONE_EVT,                /*!< When the BLE device initialization is completed, the event comes */
     POD_STARTUP_COMPLETE_EVT,               /*!< When the startup sequence was run through, the event comes */
@@ -108,6 +113,7 @@ extern pod_screen_status_t pod_screen_status;
 
 #define BLE_NAME_FORMAT         "BLE Device (%s)"
 #define WIFI_NAME_FORMAT        "WiFi (%s)"
+#define MQTT_NAME_FORMAT        "MQTT (%s)"
 #define STATUS_VOLUME_FORMAT    "Volume: %u"
 #define STATS_QUEUE_FORMAT      "Q: max %u, snd %u, rec %u, fail %u"
 #define ADV_DATA_FORMAT         "%s: %3d %+5.1f %3d %4d %+4.1f %+4.1f %+4.1f"

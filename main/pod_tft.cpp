@@ -43,6 +43,7 @@ EventGroupHandle_t pod_display_evg;
 typedef enum {
     SCREEN_BLOCK_STATUS_WIFI = 0,
     SCREEN_BLOCK_STATUS_NTP,
+    SCREEN_BLOCK_STATUS_MQTT,
     SCREEN_BLOCK_STATUS_SD,
     SCREEN_BLOCK_STATUS_BLE,
     SCREEN_OVERARCHING_STATUS,
@@ -67,6 +68,7 @@ void pod_screen_status_initialize(pod_screen_status_t *params)
     params->screen_to_show = SCREEN_STATUS;
     pod_screen_status_update_wifi        (params, WIFI_NOT_CONNECTED, "n/a");
     pod_screen_status_update_ntp         (params, NTP_TIME_NOT_SET);             // TODO where to deactivate?
+    pod_screen_status_update_mqtt        (params, MQTT_NOT_CONNECTED, "n/a");
     snprintf(buffer, 64, BLE_NAME_FORMAT, "-");
    	pod_screen_status_update_ble         (params, BLE_NOT_CONNECTED, buffer);      // TODO where to deactivate?
     pod_screen_status_update_sd          (params, SD_NOT_AVAILABLE);                // TODO where to deactivate?
@@ -90,6 +92,7 @@ void pod_screen_status_initialize(pod_screen_status_t *params)
     }
     spr[SCREEN_BLOCK_STATUS_WIFI]->createSprite(STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
     spr[SCREEN_BLOCK_STATUS_NTP]->createSprite (STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
+    spr[SCREEN_BLOCK_STATUS_MQTT]->createSprite (STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
     spr[SCREEN_BLOCK_STATUS_SD]->createSprite  (STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
     spr[SCREEN_BLOCK_STATUS_BLE]->createSprite (STATUS_SPRITE_WIDTH, STATUS_SPRITE_HEIGHT);
 
@@ -118,6 +121,12 @@ void pod_screen_status_update_wifi(pod_screen_status_t *params, display_wifi_sta
 void pod_screen_status_update_ntp(pod_screen_status_t *params, display_ntp_status_t new_status)
 {
     params->ntp_status = new_status;
+}
+
+void pod_screen_status_update_mqtt(pod_screen_status_t *params, display_mqtt_status_t new_status, const char* new_uri)
+{
+    params->mqtt_status = new_status;
+	memcpy(params->mqtt_uri, new_uri, strlen(new_uri) + 1);
 }
 
 void pod_screen_status_update_ble(pod_screen_status_t *params, display_ble_status_t new_status, const char* new_name)
@@ -252,6 +261,15 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
 	}
     s_draw_status_block(spr[SCREEN_BLOCK_STATUS_NTP], tmp_color, "Time set", complete);
 
+	// 3) MQTT
+	switch (params->mqtt_status) {
+    case MQTT_DEACTIVATED:      tmp_color = TFT_LIGHTGREY;  break;
+    case MQTT_NOT_CONNECTED:    tmp_color = TFT_RED;        break;
+    case MQTT_CONNECTED:        tmp_color = TFT_GREEN;     break;
+	default:                    tmp_color = TFT_PURPLE;     break;
+	}
+    s_draw_status_block(spr[SCREEN_BLOCK_STATUS_MQTT], tmp_color, "MQTT", complete);
+
 	// 3) SD Card storage
 	switch (params->sd_status) {
     case SD_DEACTIVATED:        tmp_color = TFT_LIGHTGREY;  break;
@@ -287,6 +305,9 @@ static void pod_screen_status_update_display(pod_screen_status_t *params, bool c
 
 	ypos += STATUS_SPRITE_HEIGHT + YPAD;
     spr[SCREEN_BLOCK_STATUS_NTP]->pushSprite(0, ypos);
+
+	ypos += STATUS_SPRITE_HEIGHT + YPAD;
+    spr[SCREEN_BLOCK_STATUS_MQTT]->pushSprite(0, ypos);
 
     ypos += STATUS_SPRITE_HEIGHT + YPAD;
     spr[SCREEN_BLOCK_STATUS_SD]->pushSprite(0, ypos);

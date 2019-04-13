@@ -26,6 +26,7 @@ void pod_update_task(void *pvParameters)
             case ID_BLEADV:
 	            ESP_LOGD(TAG, "received from queue: ID_BLEADV");
                 pod_values_update_queue_element(&new_queue_element);
+                pod_mqtt_send_queue_element(&new_queue_element);
                 pod_check_and_update_display();
                 // pod_archiver_add_adv_value(new_queue_element);
                 pod_touch_timer();

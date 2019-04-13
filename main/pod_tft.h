@@ -44,6 +44,12 @@ typedef enum {
 } display_ntp_status_t;
 
 typedef enum {
+    MQTT_DEACTIVATED,
+    MQTT_NOT_CONNECTED,
+    MQTT_CONNECTED
+} display_mqtt_status_t;
+
+typedef enum {
     BLE_DEACTIVATED,
     BLE_NOT_CONNECTED,
     BLE_SEARCHING,
@@ -71,6 +77,8 @@ typedef struct {
     display_wifi_status_t   wifi_status;
 	char		            wifi_ssid[32];
     display_ntp_status_t    ntp_status;
+    display_mqtt_status_t   mqtt_status;
+    char                    mqtt_uri[32];
     display_sd_status_t     sd_status;
     display_ble_status_t    ble_status;
     char                    ble_name[64];
@@ -92,13 +100,14 @@ void pod_screen_change(pod_screen_status_t *params, display_screen_t new_screen)
 // functions to update status screen data
 void pod_screen_status_update_wifi       (pod_screen_status_t *params, display_wifi_status_t new_status, const char* new_ssid);
 void pod_screen_status_update_ntp        (pod_screen_status_t *params, display_ntp_status_t new_status);
+void pod_screen_status_update_mqtt       (pod_screen_status_t *params, display_mqtt_status_t new_status, const char* new_uri);
 void pod_screen_status_update_ble        (pod_screen_status_t *params, display_ble_status_t new_status, const char* new_name);
 void pod_screen_status_update_sd         (pod_screen_status_t *params, display_sd_status_t new_status);
 void pod_screen_status_update_button     (pod_screen_status_t *params, uint8_t change_button, bool new_status, const char* new_button_text);
 void pod_screen_status_update_statustext (pod_screen_status_t *params, bool new_show_text, char* new_status_text);
 
 // running screen
-void pod_screen_running_update_display();
+void pod_screen_data_update_display();
 
 // queue information
 void pod_screen_status_update_queue_status(pod_screen_status_t *params, bool new_show_status);
